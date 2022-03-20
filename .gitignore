@@ -1,5 +1,5 @@
 *.exe
 *.dll
-SDL DFT/lib/
-SDL DFT/include/sdl2/
+SDL lib/
+SDL include/sdl2/
 .vscode/
