@@ -1,0 +1,5 @@
+*.exe
+*.dll
+SDL Tutorial Series/lib/
+SDL Tutorial Series/include/sdl2/
+.vscode/
