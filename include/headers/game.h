@@ -12,17 +12,27 @@ class Game {
         ~Game();
 
         void run();
+        
+        static SDL_Renderer* renderer;
 
     private:
         void init(const char* title, int x, int y, int w, int h, Uint32 flags);
         void gameLoop();
         void handleEvents();
+        void render();
+        void clean();
+        void update();
 
-        SDL_Window* _window;
-        SDL_Renderer* _renderer;
+        SDL_Window* window;
 
-        int _screenWidth;
-        int _screenHeight;
+        int screenWidth;
+        int screenHeight;
 
-        GameState _gameState;
+        const int FPS = 60;
+        const int frameDelay = 1000 / FPS;  
+
+        Uint32 frameStart;
+        int frameTime;
+
+        GameState gameState;
 };
