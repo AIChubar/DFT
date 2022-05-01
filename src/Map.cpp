@@ -1,41 +1,10 @@
-#include <headers/Map.h>
-#include <headers/TextureManager.h>
-#include <headers/Game.h>
-
-int field[20][25] = {
-    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
-};
-
+#include "headers/Map.h"
+#include "headers/TextureManager.h"
+#include "headers/Game.h"
+#include <fstream>
+#include <iostream>
 Map::Map()
 {
-    dirt = TextureManager::loadTexture("assets/yellow.png");
-
-    loadMap(field);
-
-    src.x = src.y = 0;
-    src.w = dest.w = 32;
-    src.h = dest.h = 32;
-
-    dest.x = dest.y = 0;
 }
 
 Map::~Map()
@@ -43,39 +12,23 @@ Map::~Map()
     //SDL_DestroyTexture(...);
 }
 
-void Map::loadMap(int arr[20][25])
+void Map::loadMap(std::string path, int sizeX, int sizeY)
 {
-    for (int row = 0; row < 20; row++)
+    char tile;
+    std::fstream mapFile;
+    mapFile.open(path);
+
+    for (int y = 0; y < sizeY; y++)
     {
-        for (int column = 0; column < 25; column++)
+        for (int x = 0; x < sizeX; x++)
         {
-            map[row][column] = arr[row][column];
+            mapFile.get(tile);
+            std::cout << tile << ' ';
+            Game::addTile(atoi(&tile), x*64, y*64); // Loading tile index from a map and converting it to int
+            mapFile.ignore();
         }
+        std::cout << '\n';
     }
-}
 
-void Map::drawMap()
-{
-    int type = 0;
-
-    for (int row = 0; row < 20; row++)
-    {
-        for (int column = 0; column < 25; column++)
-        {
-            type = field[row][column];
-
-            dest.x = column*32;
-            dest.y = row*32;
-            //TextureManager::draw(dirt, src, dest);
-            switch (type)
-            {
-                case 0:
-                    TextureManager::draw(dirt, src, dest);
-                    break;
-                default:
-                    std::cout << "err" << '\n';
-                    break;
-            }
-        }
-    }   
+    mapFile.close();
 }

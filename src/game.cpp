@@ -1,15 +1,14 @@
-#include <headers/Game.h>
-#include <headers/TextureManager.h>
-#include <headers/GameObject.h>
-#include <headers/Map.h>
+#include "headers/Game.h"
+#include "headers/TextureManager.h"
+#include "headers/Map.h"
 
-#include <headers/ECS/Components.h>
-#include <headers/ECS/ECS.h>
+#include "headers/ECS/Components.h"
+#include "headers/ECS/ECS.h"
 
 Map* map;
 
 SDL_Renderer* Game::renderer = nullptr;
-
+SDL_Event Game::event;
 Manager manager;
 
 auto& player(manager.addEntity());
@@ -17,8 +16,8 @@ auto& player(manager.addEntity());
 Game::Game() {
     window = nullptr;
     renderer = nullptr;
-    screenWidth = 800;
-    screenHeight = 640;
+    screenWidth = 1600;
+    screenHeight = 896;
     gameState = GameState::PLAY;
 }
 Game::~Game() {}
@@ -41,16 +40,16 @@ void Game::init(const char* title, int x, int y, int w, int h, Uint32 flags)
         SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
     }
 
-
-    map = new Map();
+    Map::loadMap("assets/MainMap.txt", 25, 14);
     
-    player.addComponent<PositionComponent>();
+    player.addComponent<TransformComponent>();
     player.addComponent<SpriteComponent>("assets/tex.png");
+    player.addComponent<DragComponent>();
 }
 
 void Game::handleEvents() 
 {
-    SDL_Event event;
+    
     SDL_PollEvent(&event);
 
     switch (event.type)
@@ -65,18 +64,18 @@ void Game::update()
 {
     manager.refresh();
     manager.update();
-
-    if(player.getComponent<PositionComponent>().x() > 100)
-    {
-        player.getComponent<SpriteComponent>().setTex("yellow.png");
-    }
+    //player.getComponent<TransformComponent>().position.add(Vector2D(5, 0));
+    // if(player.getComponent<TransformComponent>().x() > 100)
+    // {
+    //     player.getComponent<SpriteComponent>().setTex("yellow.png");
+    // }
 }
 
 
 void Game::render() 
 {
     SDL_RenderClear(renderer);
-    map->drawMap();
+    //map->drawMap();
     manager.draw();
     SDL_RenderPresent(renderer);
     SDL_Delay(0);
@@ -108,4 +107,10 @@ void Game::clean()
     SDL_DestroyWindow(window);
     SDL_DestroyRenderer(renderer);
     SDL_Quit();
+}
+
+void Game::addTile(int id, int x, int y)
+{
+    auto& tile(manager.addEntity());
+    tile.addComponent<TileComponent>(x, y, 32, 32, id);
 }

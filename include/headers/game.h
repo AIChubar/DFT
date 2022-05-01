@@ -14,7 +14,8 @@ class Game {
         void run();
         
         static SDL_Renderer* renderer;
-
+        static SDL_Event event;
+        static void addTile(int id, int x, int y);
     private:
         void init(const char* title, int x, int y, int w, int h, Uint32 flags);
         void gameLoop();
@@ -25,6 +26,7 @@ class Game {
 
         SDL_Window* window;
 
+        
         int screenWidth;
         int screenHeight;
 
