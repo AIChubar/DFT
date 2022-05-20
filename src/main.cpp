@@ -1,9 +1,12 @@
-#include "headers/Game.h"
+#include "Game.h"
 
-//const int WIDTH = 800, HEIGHT = 600;
 
-int main(int arcg, char *argv[])
+
+int main(int argc, char *argv[])
 {
+    (void)argc;
+    (void)argv;
+
     Game game;
 
     game.run();

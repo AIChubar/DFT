@@ -8,45 +8,57 @@ public:
 
     Vector2D position;
 
-    int height = 32;
-    int width = 32;
-    float scale = 1.0f;
+    int height;
+    int width;
+    float scale = 2.0f; // I always use this scale to have a consistent pixelish resolution
 
+    ~TransformComponent() = default;
+    
     TransformComponent()
     {
-        position.x = 0.0f;
-        position.y = 0.0f;
+        position.x = 0;
+        position.y = 0;
+        width = 32;
+        height = 32;
     }
 
-    TransformComponent(float x, float y)
+    TransformComponent(int x, int y) //need to wrap constructors
     {
         position.x = x;
         position.y = y;
+        width = 32;
+        height = 32;
     }
 
-    TransformComponent(float x, float y, int h, int w, float sc)
+    TransformComponent(Vector2D pos)
+    {
+        position = pos;
+        width = 32;
+        height = 32;
+    }
+    TransformComponent(Vector2D pos, int h, int w)
+    {
+        position = pos;
+        height = h;
+        width = w;
+    }
+
+    TransformComponent(float x, float y, int h, int w)
     {
         position.x = x;
         position.y = y;
         height = h;
         width = w;
-        scale = sc;
+    }
+
+    void setPos(Vector2D pos)
+    {
+        position = pos;
     }
 
     int x() {return position.x;}
     int y() {return position.y;}
-
-    void update() override
-    {
-
-    }
-
-    void setPose(float x, float y)
-    {
-        position.x = x;
-        position.y = y;
-    }
  
-    void x(float x) {position.x = x;}
-    void y(float y) {position.y = y;}
+    void x(int x) {position.x = x;}
+    void y(int y) {position.y = y;}
 };

@@ -1,4 +1,6 @@
-#include "headers/TextureManager.h"
+#include "TextureManager.h"
+#include "Game.h"
+#include <cstring>
 
 SDL_Texture* TextureManager::loadTexture(const char* texture)
 {
@@ -9,11 +11,7 @@ SDL_Texture* TextureManager::loadTexture(const char* texture)
     return tex;
 }
 
-void TextureManager::draw(SDL_Texture* texture, SDL_Rect src, SDL_Rect dest)
+void TextureManager::draw(SDL_Texture* texture, SDL_Rect src, SDL_Rect dest, SDL_RendererFlip flip)
 {
-    if (texture == nullptr)
-    {
-        std::cout << "err" << '\n';
-    }
-    SDL_RenderCopy(Game::renderer, texture, &src, &dest);
+    SDL_RenderCopyEx(Game::renderer, texture, &src, &dest, 0, NULL, flip); // Rendering a texture with an optional animation
 }

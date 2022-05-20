@@ -1,52 +1,55 @@
 #pragma once
 
-#include "headers/ECS/Components.h"
-#include "headers/ECS/ECS.h"
-//#include "headers/"
+#include "Game.h"
+#include "Vector2D.h"
 
 class TileComponent : public Component
 {
     public:
-    TransformComponent *transform;
-    SpriteComponent *sprite;
-
-    SDL_Rect tileRect;
-
-    int tileID;
-    const char* path;
+    SDL_Texture* texture;
+    SDL_Rect srcRectTile, srcRectTileOverlay, destRect;
+    TileStatus tileStatus;
+    SDL_Texture* tileOverlay;
+    int bindedCharIndex; // -1 if there is no character on the tile
+    Vector2D position;
     TileComponent() = default;
 
-    TileComponent(int x, int y, int w, int h, int id)
+    ~TileComponent()
     {
-        tileRect.x = x;
-        tileRect.y = y;
-        tileRect.w = w;
-        tileRect.h = h;
-        tileID = id;
-
-        switch (tileID)
-        {
-            case 0:
-                path = "assets/PlayerBoardTile_0.png";
-                break;
-            case 1:
-                path = "assets/EnvironmentTile_1.png";
-                break;
-            case 2:
-                path = "assets/CharacterTile_2.png";
-                break;
-            default:
-                path = "assets/EnvironmentTile_1.png";
-                break;
-        }
+        SDL_DestroyTexture(texture);
     }
 
-    void init() override
+    TileComponent(int srcX, int srcY, int xPos, int yPos, const std::string& idTile, const std::string& idTileOverlay, TileStatus tileStat)
     {
-        entity->addComponent<TransformComponent>(static_cast<float>(tileRect.x), static_cast<float>(tileRect.y), tileRect.w, tileRect.h, 2.0);
-        transform = &entity->getComponent<TransformComponent>();
+        texture = Game::assets->getTexture(idTile);
+        tileStatus = tileStat;
 
-        entity->addComponent<SpriteComponent>(path);
-        sprite = &entity->getComponent<SpriteComponent>();
+        bindedCharIndex = -1;
+        if (tileStatus != TileStatus::BACKGROUND)
+        {
+            tileOverlay = Game::assets->getTexture(idTileOverlay);
+        }
+
+        srcRectTile.x = srcX;
+        srcRectTile.y = srcY;
+        srcRectTile.w = srcRectTile.h = srcRectTileOverlay.w = srcRectTileOverlay.h = 32;
+
+        srcRectTileOverlay.y = 0;
+        srcRectTileOverlay.x = 32 * static_cast<size_t>(tileStatus);
+
+        destRect.x = position.x = xPos;
+        destRect.y = position.y = yPos;
+        destRect.w = destRect.h = 64;
+    } 
+
+    void draw() override
+    {
+        TextureManager::draw(texture, srcRectTile, destRect, SDL_FLIP_NONE);
+        
+        if (tileStatus == TileStatus::BACKGROUND)
+        {
+            return;
+        }
+        TextureManager::draw(tileOverlay, srcRectTileOverlay, destRect, SDL_FLIP_NONE);
     }
 };

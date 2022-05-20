@@ -1,0 +1,91 @@
+[   
+    { 
+        "name": "Peasant",
+        "health": 50,
+        "damage": 10,
+        "ranged": false,
+        "cleave": false,
+        "cost": 10
+    },
+
+    {
+        "name": "Archer",
+        "health": 30,
+        "damage": 15,
+        "ranged": true,
+        "cleave": false,
+        "cost": 20
+    },
+
+    {
+        "name": "Knight",
+        "health": 80,
+        "damage": 20,
+        "ranged": false,
+        "cleave": true,
+        "cost": 30
+    },
+
+    {
+        "name": "Monk",
+        "health": 50,
+        "damage": 30,
+        "ranged": true,
+        "cleave": false,
+        "cost": 40
+    },
+
+    {
+        "name": "King",
+        "health": 150,
+        "damage": 40,
+        "ranged": false,
+        "cleave": false,
+        "cost": 50
+    },
+
+    {
+        "name": "Imp",
+        "health": 30,
+        "damage": 15,
+        "ranged": false,
+        "cleave": false,
+        "cost": 10
+    },
+
+    {
+        "name": "Gog",
+        "health": 20,
+        "damage": 15,
+        "ranged": true,
+        "cleave": false,
+        "cost": 20
+    },
+
+    {
+        "name": "Succub",
+        "health": 40,
+        "damage": 20,
+        "ranged": true,
+        "cleave": true,
+        "cost": 30
+    },
+
+    {
+        "name": "Demon",
+        "health": 90,
+        "damage": 30,
+        "ranged": false,
+        "cleave": false,
+        "cost": 40
+    },
+
+    {
+        "name": "Devil",
+        "health": 120,
+        "damage": 40,
+        "ranged": false,
+        "cleave": false,
+        "cost": 50
+    }
+]

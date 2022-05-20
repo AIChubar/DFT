@@ -2,4 +2,5 @@
 *.dll
 lib/
 include/sdl2/
+include/nlohmann/
 .vscode/
