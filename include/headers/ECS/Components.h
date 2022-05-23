@@ -10,7 +10,6 @@
 #include "ECS/CharacterLabel.h"
 #include "ECS/CharacterLabelControlComponent.h"
 #include "ECS/MoneyLabel.h"
-#include "ECS/GameModeButtonComponent.h"
 #include "ECS/ButtonComponent.h"
-
+#include "ECS/CharacterFrameComponent.h"
 

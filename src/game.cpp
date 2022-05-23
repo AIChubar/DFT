@@ -1,7 +1,6 @@
 #include "Game.h"
 #include "TextureManager.h"
-#include "Map.h"
-#include "LevelManager.h"
+
 #include <random>
 #include <chrono>
 #include <inttypes.h>
@@ -12,12 +11,9 @@ unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
 
 std::default_random_engine gen(seed);
 
-Map* map; //initialized here to avoid circular dependency
-LevelManager* levelManager;
-
 SDL_Renderer* Game::renderer = nullptr;
 SDL_Event Game::event;
-Manager manager;
+Manager manager; //This is destroyed
 
 GameStage Game::gameStage;
 GameMode Game::gameMode;
@@ -25,7 +21,7 @@ GameMode Game::gameMode;
 const char* mapFile = "assets/TileSet.png";
 const char* characterTilesFile = "assets/CharacterTile.png";
 
-AssetManager* Game::assets = new AssetManager(&manager);
+std::unique_ptr<AssetManager> Game::assets = std::make_unique<AssetManager>(&manager);
 
 // Declaring groups
 auto& tiles(manager.getGroup(GroupLabels::groupMAP)); 
@@ -52,6 +48,7 @@ auto& shopText(manager.addEntity());
 auto& enemyBoardText(manager.addEntity());
 auto& playerBoardText(manager.addEntity());
 auto& levelText(manager.addEntity());
+
     
 Game::Game() {
     window = nullptr;
@@ -63,9 +60,16 @@ Game::Game() {
     gameState = GameState::PLAY;
     Game::gameStage = GameStage::MODECHOOSING;
     currentLevel = 0;
-    
+    startingMoney = 350;
+    currentDuelIndex = 0;
+    currentOpponentIndex = 0;
+    currentDuelTimer = 0;
+    attackingSide = Side::PLAYER;
+    duelIsActive = false;
 }
-Game::~Game() {}
+Game::~Game() 
+{
+}
 
 void Game::run() 
 {
@@ -95,61 +99,70 @@ void Game::init(const char* title, int x, int y, int w, int h, Uint32 flags)
     assets->addTexture("charOverlay", "assets/charOverlay.png");
     assets->addTexture("buttonEvil", "assets/buttonEvil.png");
     assets->addTexture("buttonGood", "assets/buttonGood.png");
-    assets->addTexture("regularButton", "assets/regularButton.png");
+    assets->addTexture("buttonRegular", "assets/buttonRegular.png");
+    assets->addTexture("fightFrame", "assets/fightFrame.png");
 
-    map = new Map("terrain", "charOverlay", 64);
+    const std::array<const char*, 10> characterTextures = {"assets/char0.png", "assets/char1.png", "assets/char2.png", "assets/char3.png", "assets/char4.png", "assets/char5.png",
+"assets/char6.png", "assets/char7.png", "assets/char8.png", "assets/char9.png"};
+
+    for (size_t i = 0; i < characterTextures.size(); i++)
+    {
+        Game::assets->addTexture("char" + std::to_string(i) + ".png", characterTextures[i]);
+    }
+
+
+    assets->addFont("textSmall", "fonts/Tillana-Bold.ttf", 24);
+     assets->addFont("textCharacters", "fonts/Tillana-Bold.ttf", 32);
+    assets->addFont("textRegular", "fonts/Tillana-Bold.ttf", 48);
+    assets->addFont("textLarge", "fonts/Tillana-Bold.ttf", 72);
+
+    map = std::make_unique<Map>("terrain", "charOverlay", 64);
     std::vector<Vector2D> shopTileCoords;
     std::vector<Vector2D> enemiesTileCoords;
-    map->loadMap("assets/MainMap.txt", "assets/charOverlay.txt", shopTileCoords, enemiesTileCoords, numTilesX, numTilesY);
-    levelManager = new LevelManager(&manager, "assets/characters.json", shopTileCoords, enemiesTileCoords);
+    std::vector<Vector2D> playerBoardCoords;
+    map->loadMap("assets/MainMap.txt", "assets/charOverlay.txt", playerBoardCoords, shopTileCoords, enemiesTileCoords, numTilesX, numTilesY);
+    levelManager = std::make_unique<LevelManager>("assets/characters.json", playerBoardCoords, shopTileCoords, enemiesTileCoords);
+
 
     
     SDL_Color white = {255, 255, 255, 255};
     SDL_Color red = {135, 0, 0, 255};
-    characterLabel.addComponent<CharacterLabel>();
+    
+    characterLabel.addComponent<CharacterLabel>("textCharacters", white);
     characterLabel.addGroup(GroupLabels::groupLABELS);
 
-    moneyLabel.addComponent<MoneyLabel>(250);
+    moneyLabel.addComponent<MoneyLabel>(350, 64*13, 64*12, "Gold: ", "textRegular", white);
     moneyLabel.addGroup(GroupLabels::groupLABELS);
 
-    buttonEvil.addComponent<TransformComponent>(Vector2D(64*11 - 96, 64*7 - 48), 48, 96);
-    buttonEvil.addComponent<SpriteComponent>("buttonEvil");
-    buttonEvil.addComponent<GameModeButtonComponent>(GameMode::EVIL);
-    buttonEvil.addComponent<UILAbelComponent>(64*11 - 96, 64*7 - 48, "Evil", white, 48); // Need to add constructor that consider transformComponent to center text
+    buttonEvil.addComponent<ButtonComponent>(Vector2D(64*11 - 96, 64*7 - 48), 96, 192, UserEvents::EVILMODE, "buttonEvil");
+    buttonEvil.addComponent<UILAbelComponent>("Evil", "textRegular", white);
     buttonEvil.addGroup(GroupLabels::groupBUTTONS);
 
-    buttonGood.addComponent<TransformComponent>(Vector2D(64*12 + 96, 64*7 - 48), 48, 96);
-    buttonGood.addComponent<SpriteComponent>("buttonGood");
-    buttonGood.addComponent<GameModeButtonComponent>(GameMode::GOOD);
-    buttonGood.addComponent<UILAbelComponent>(64*12 + 96, 64*7 - 48, "Good", white, 48);
+    buttonGood.addComponent<ButtonComponent>(Vector2D(64*12 + 96, 64*7 - 48), 96, 192, UserEvents::GOODMODE, "buttonGood");
+    buttonGood.addComponent<UILAbelComponent>("Good", "textRegular", white);
     buttonGood.addGroup(GroupLabels::groupBUTTONS);
-    
-    buttonFight.addComponent<TransformComponent>(Vector2D(64*17 + 32, 64*10), 48, 96);
-    buttonFight.addComponent<SpriteComponent>("buttonGood"); //needs to have its button
-    buttonFight.addComponent<ButtonComponent>(UserEvents::STARTFIGHT);
-    buttonFight.addComponent<UILAbelComponent>(64*17 + 32, 64*10, "Start Fight", white, 24);
+
+    buttonFight.addComponent<ButtonComponent>(Vector2D(64*18, 64*10), 96, 192, UserEvents::STARTFIGHT, "buttonRegular");
+    buttonFight.addComponent<UILAbelComponent>("Start Fight", "textSmall", white);
     buttonFight.addGroup(GroupLabels::groupBUTTONS);
 
-    buttonPowerUp.addComponent<TransformComponent>(Vector2D(64*21, 64*10), 48, 96);
-    buttonPowerUp.addComponent<SpriteComponent>("buttonGood"); //needs to have its button
-    buttonPowerUp.addComponent<ButtonComponent>(UserEvents::POWERUP);
-    buttonPowerUp.addComponent<UILAbelComponent>(64*21, 64*10, "Power Up", white, 24);
+    buttonPowerUp.addComponent<ButtonComponent>(Vector2D(64*21 + 32, 64*10), 96, 192, UserEvents::POWERUP, "buttonRegular");
+    buttonPowerUp.addComponent<UILAbelComponent>("Power Up", "textSmall", white);
     buttonPowerUp.addGroup(GroupLabels::groupBUTTONS);
 
-    shopText.addComponent<UILAbelComponent>(64*20 -32, 64*1 - 32, "Shop", white, 48);
+    shopText.addComponent<UILAbelComponent>(64*20 - 32, 64*1 - 32, "Shop", "textRegular", white);
     shopText.addGroup(GroupLabels::groupLABELS);
 
-    enemyBoardText.addComponent<UILAbelComponent>(64*6, 64*3 - 32, "Enemy Board", white, 48);
+    enemyBoardText.addComponent<UILAbelComponent>(64*6, 64*3 - 32, "Enemy Board", "textRegular", white);
     enemyBoardText.addGroup(GroupLabels::groupLABELS);
 
-    playerBoardText.addComponent<UILAbelComponent>(64*6, 64*9 - 32, "Your Board", white, 48);
+    playerBoardText.addComponent<UILAbelComponent>(64*6, 64*9 - 32, "Your Board", "textRegular", white);
     playerBoardText.addGroup(GroupLabels::groupLABELS);
 
-    levelText.addComponent<UILAbelComponent>(10, 10, "Level: 0", white, 48);
+    levelText.addComponent<UILAbelComponent>(10, 10, "Level: 0", "textRegular", white);
     levelText.addGroup(GroupLabels::groupLABELS);
     
-    gameOverText.addComponent<UILAbelComponent>(64*4, 64*6 - 48, "Game Over. Reached Level: ", red, 72);
-
+    gameOverText.addComponent<UILAbelComponent>(64*4, 64*6 - 48, "Game Over. Reached Level: ", "textLarge", red);
 }
 
 void Game::initLevel()
@@ -157,43 +170,7 @@ void Game::initLevel()
     levelManager->loadCharacters(currentLevel, gameMode);
 }
 
-void Game::startFight() // need to add fighting visualization and improve structure
-{
-    while (!(playerBoard.empty() || enemyBoard.empty()))
-    {
-        for (size_t i = 0; i < playerBoard.size(); i++)
-        {   
-            size_t randomIndex = random(0, enemyBoard.size() - 1);
-            CharacterComponent* opponent = &enemyBoard.at(randomIndex)->getComponent<CharacterComponent>();
-            playerBoard.at(i)->getComponent<CharacterComponent>().attack(opponent);
-            update();
-            if (playerBoard.empty() || enemyBoard.empty())
-            {
-                break;
-            }
-        }
-        if (playerBoard.empty())
-        {
-            break;
-        }
-        for (size_t i = 0; i < enemyBoard.size(); i++)
-        {
-            size_t randomIndex = random(0, playerBoard.size() - 1);
-            CharacterComponent* opponent = &playerBoard.at(randomIndex)->getComponent<CharacterComponent>();
-            enemyBoard.at(i)->getComponent<CharacterComponent>().attack(opponent);
-            update();
-            if (playerBoard.empty() || enemyBoard.empty() )
-            {
-                break;
-            }
-        }
-    }
-    if (playerBoard.empty() && !enemyBoard.empty())
-    {
-        gameOverText.getComponent<UILAbelComponent>().addText(std::to_string(currentLevel));
-        gameStage = GameStage::GAMEOVER;
-    }
-}
+
 
 int Game::random(int low, int high) const
 {
@@ -215,10 +192,6 @@ void Game::handleEvents()
         {
             s->handleEvents();
         }
-        for (auto& l : labels)
-        {
-            l->handleEvents();
-        }
         for (auto& pb : playerBoard)
         {
             pb->handleEvents();
@@ -229,6 +202,11 @@ void Game::handleEvents()
         }
     }
 
+    for (auto& l : labels)
+    {
+        l->handleEvents();
+    }
+
     SDL_PollEvent(&event);
 
     switch (event.type)
@@ -237,22 +215,32 @@ void Game::handleEvents()
             gameState = GameState::EXIT;
             break;
         case SDL_USEREVENT:
-            if(event.user.code == UserEvents::MODEBUTTON)
+            if(event.user.code == UserEvents::GOODMODE)
             {
+                gameMode = GameMode::GOOD;
+                gameStage = GameStage::BOARDMANAGEMENT;
+                buttonEvil.destroy();
+                buttonGood.destroy();
+                initLevel();
+            }
+            else if(event.user.code == UserEvents::EVILMODE)
+            {
+                gameMode = GameMode::EVIL;
+                gameStage = GameStage::BOARDMANAGEMENT;
                 buttonEvil.destroy();
                 buttonGood.destroy();
                 initLevel();
             }
             else if(event.user.code == UserEvents::STARTFIGHT && !(playerBoard.empty() || enemyBoard.empty()))
             {
-                //gameStage = GameStage::FIGHTING;
-                startFight();
+                //sortPlayerBoard();
+                gameStage = GameStage::FIGHTING;
+                playerBoardSize =  playerBoard.size();
+                enemyBoardSize =  enemyBoard.size();
+                //startDuel;
                 
-                currentLevel++;
-                levelText.getComponent<UILAbelComponent>().setText("Level: " + std::to_string(currentLevel));
-                initLevel();
             }
-            else if(event.user.code == UserEvents::POWERUP)
+            else if(event.user.code == UserEvents::POWERUP && !playerBoard.empty())
             {
                 if (!moneyLabel.getComponent<MoneyLabel>().pay(30))
                     break;
@@ -266,15 +254,122 @@ void Game::handleEvents()
                 int cost = *(int*)event.user.data1;
                 moneyLabel.getComponent<MoneyLabel>().changeBalance(cost*0.7);
             }
+            else if(event.user.code == UserEvents::ENEMYDIED)
+            {
+            }
+            else if(event.user.code == UserEvents::PLAYERDIED)
+            {
+            }
             break;
     }
     
 }
 
+
 void Game::update()
 {
     manager.refresh();
     manager.update();
+    
+    if (gameStage == GameStage::FIGHTING)
+    {
+        startDuel();
+        
+    }
+    
+}
+
+void Game::startDuel()
+{
+    if (!(playerBoard.empty() || enemyBoard.empty()))
+    { 
+        if (attackingSide == Side::PLAYER)
+        {
+            if (!duelIsActive)
+            {
+                if (playerBoardSize > playerBoard.size()) //size is changed, therefore previous character is dead
+                {
+                    playerBoardSize = playerBoard.size();
+                    currentDuelIndex--;
+                }
+                if (currentDuelIndex < playerBoard.size())
+                {
+                    currentOpponentIndex = random(0, enemyBoard.size() - 1);
+                   
+                    currentOpponent = enemyBoard.at(currentOpponentIndex);
+                    currentAttacker = playerBoard.at(currentDuelIndex);
+                    currentAttacker->getComponent<CharacterComponent>().startAttack(currentOpponent);
+                }
+                else
+                {
+                    currentDuelIndex = 0;
+                    enemyBoardSize = enemyBoard.size();
+                    attackingSide = Side::ENEMY;
+                    return;
+                }
+                currentDuelTimer = 0;
+                duelIsActive = true;
+            }
+            else if (duelIsActive && currentDuelTimer > 1000)
+            {
+                currentAttacker->getComponent<CharacterComponent>().finishAttack(currentOpponent);
+                currentDuelIndex++;
+                duelIsActive = false;
+            }
+            
+        }
+        else
+        {
+            if (!duelIsActive)
+            {
+                if (enemyBoardSize > enemyBoard.size())
+                {
+                    currentDuelIndex--;
+                    enemyBoardSize = enemyBoard.size();
+                }
+                if (currentDuelIndex < enemyBoard.size())
+                {
+                    currentOpponentIndex = random(0, playerBoard.size() - 1);
+                    currentOpponent = playerBoard.at(currentOpponentIndex);
+                    currentAttacker = enemyBoard.at(currentDuelIndex);
+                    currentAttacker->getComponent<CharacterComponent>().startAttack(currentOpponent);
+                }
+                else
+                {
+                    currentDuelIndex = 0;
+                    playerBoardSize = playerBoard.size();
+                    attackingSide = Side::PLAYER;
+                    return;
+                }
+                currentDuelTimer = 0;
+                duelIsActive = true;
+            }
+            else if (duelIsActive && currentDuelTimer > 1000)
+            {
+                currentAttacker->getComponent<CharacterComponent>().finishAttack(currentOpponent);
+                currentDuelIndex++;
+                duelIsActive = false;
+            }
+        }
+    }    
+    else
+    {
+        if (playerBoard.empty() && !enemyBoard.empty())
+        {
+            gameOverText.getComponent<UILAbelComponent>().addText(std::to_string(currentLevel));
+            gameStage = GameStage::GAMEOVER;
+        }
+        else
+        {
+            currentDuelIndex = 0;
+            currentDuelTimer = 0;
+            attackingSide = Side::PLAYER;
+            currentLevel++;
+            levelText.getComponent<UILAbelComponent>().setText("Level: " + std::to_string(currentLevel));
+            gameStage = GameStage::BOARDMANAGEMENT;
+            initLevel();
+        }
+    }
 }
 
 
@@ -347,6 +442,11 @@ void Game::gameLoop()
         {
             SDL_Delay(frameDelay - frameTime);
         }
+        if (gameStage == GameStage::FIGHTING)
+        {
+            currentDuelTimer += (frameTime < frameDelay ? frameDelay : frameTime);
+        }
+        
         
     }
     clean();
@@ -369,13 +469,12 @@ void Game::restart() // TBD
 
 //Static functions
 
-Entity* Game::getCharByIndex(GroupLabels grp, size_t i)
+Entity& Game::getCharByIndex(GroupLabels grp, size_t i)
 {
-    Entity* Character = manager.getCharByIndex(grp, i);
-    return Character;
+    return  manager.getCharByIndex(grp, i);
 }
 
-Entity* Game::getTileByCoord(int xTile, int yTile) // Treat 1d group array as 2d
+Entity& Game::getTileByCoord(int xTile, int yTile) // Treat 1d group array as 2d
 { //TBD decide on input (tile index or coords)
-    return tiles.at(25*yTile + xTile);
+    return *tiles.at(25*yTile + xTile);
 }

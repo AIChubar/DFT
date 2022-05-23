@@ -27,10 +27,13 @@ enum Labels : std::size_t // Specifying underlying enum type
 
 enum UserEvents : std::size_t // Specifying underlying enum type
 {
-    MODEBUTTON,
+    GOODMODE,
+    EVILMODE,
     STARTFIGHT,
     POWERUP,
-    ADDMONEY
+    ADDMONEY,
+    ENEMYDIED,
+    PLAYERDIED
 };
 
 enum class GameMode

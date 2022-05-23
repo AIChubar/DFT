@@ -5,13 +5,17 @@
 
 class TileComponent : public Component
 {
-    public:
+    private:
     SDL_Texture* texture;
     SDL_Rect srcRectTile, srcRectTileOverlay, destRect;
-    TileStatus tileStatus;
+    
     SDL_Texture* tileOverlay;
-    int bindedCharIndex; // -1 if there is no character on the tile
+     // -1 if there is no character on the tile
     Vector2D position;
+    
+    public:
+    TileStatus tileStatus;
+    int bindedCharIndex;
     TileComponent() = default;
 
     ~TileComponent()
@@ -23,7 +27,6 @@ class TileComponent : public Component
     {
         texture = Game::assets->getTexture(idTile);
         tileStatus = tileStat;
-
         bindedCharIndex = -1;
         if (tileStatus != TileStatus::BACKGROUND)
         {
@@ -32,10 +35,10 @@ class TileComponent : public Component
 
         srcRectTile.x = srcX;
         srcRectTile.y = srcY;
-        srcRectTile.w = srcRectTile.h = srcRectTileOverlay.w = srcRectTileOverlay.h = 32;
+        srcRectTile.w = srcRectTile.h = srcRectTileOverlay.w = srcRectTileOverlay.h = 64;
 
         srcRectTileOverlay.y = 0;
-        srcRectTileOverlay.x = 32 * static_cast<size_t>(tileStatus);
+        srcRectTileOverlay.x = 64 * static_cast<size_t>(tileStatus);
 
         destRect.x = position.x = xPos;
         destRect.y = position.y = yPos;
@@ -51,5 +54,10 @@ class TileComponent : public Component
             return;
         }
         TextureManager::draw(tileOverlay, srcRectTileOverlay, destRect, SDL_FLIP_NONE);
+    }
+
+    Vector2D getPos() const
+    {
+        return position;
     }
 };

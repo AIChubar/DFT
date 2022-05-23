@@ -28,11 +28,11 @@ public:
 
     bool active;
 
-    CharacterLabel()
+    CharacterLabel(const std::string& fID, SDL_Color color)
     {
         active = false;
-        textColor = {255, 255, 255, 255};
-        font = TTF_OpenFont("fonts/Tillana-Bold.ttf", 30);
+        textColor = color;
+        font = Game::assets->getFont(fID); 
         
         for (size_t i = 0; i < 2; i++) //Creating 6 rectangles for characterLabel in the bottom left part of the screen
         {
@@ -50,7 +50,12 @@ public:
     }
 
     ~CharacterLabel()
-    {}
+    {
+        for (auto& t:labelTextures)
+        {
+            SDL_DestroyTexture(t);
+        }
+    }
 
     void draw() override
     {
@@ -62,10 +67,13 @@ public:
     }
 
     void update() override
-    {}
+    {
+        if (active)
+            setLabelTexts();
+    }
     
 
-    void activate(CharacterComponent* character)
+    void activateLabel(CharacterComponent* character)
     {
         active = true;
         currentCharacter = character;

@@ -1,24 +1,18 @@
 #include "LevelManager.h"
-#include "Game.h"
 #include "ECS/Components.h"
-#include "fstream"
+#include "Game.h"
+#include <fstream>
 
 
+extern Manager manager;
 
-
-LevelManager::LevelManager(Manager* mng, const std::string& jCharFile, const std::vector<Vector2D>& shopTiles, const std::vector<Vector2D>& enemiesTiles)
+LevelManager::LevelManager(const std::string& jCharFile, const std::vector<Vector2D>& playerBoard, const std::vector<Vector2D>& shopTiles, const std::vector<Vector2D>& enemiesTiles)
 {
     std::ifstream f(jCharFile);
     f >> jCharacters;
-    manager = mng;
-
+    playerBoardCoords = playerBoard;
     shopTileCoords = shopTiles;
     enemiesTileCoords = enemiesTiles; 
-
-    for (size_t i = 0; i < characterTextures.size(); i++)
-    {
-        Game::assets->addTexture("char" + std::to_string(i) + ".png", characterTextures[i]);
-    }
 }
 
 LevelManager::~LevelManager(){}
@@ -46,9 +40,9 @@ void LevelManager::loadCharacters(Level level, GameMode gmd)
         addChars(Side::PLAYER, PowerLevels::ROOK + playerStartingIndex, 2, 1);
         addChars(Side::PLAYER, PowerLevels::KNIGHT + playerStartingIndex, 1, 2);
         addChars(Side::PLAYER, PowerLevels::BISHOP + playerStartingIndex, 0, 3);
-        addChars(Side::ENEMY, PowerLevels::PAWN + enemiesStartingIndex, 4, 2);
-        addChars(Side::ENEMY, PowerLevels::ROOK + enemiesStartingIndex, 3, 2);
-        addChars(Side::ENEMY, PowerLevels::KNIGHT + enemiesStartingIndex, 2, 2);
+        addChars(Side::ENEMY, PowerLevels::PAWN + enemiesStartingIndex, 2, 4);
+        addChars(Side::ENEMY, PowerLevels::ROOK + enemiesStartingIndex, 2, 2);
+        addChars(Side::ENEMY, PowerLevels::KNIGHT + enemiesStartingIndex, 1, 2);
         
     }
     else if (level == 2)
@@ -56,7 +50,7 @@ void LevelManager::loadCharacters(Level level, GameMode gmd)
         addChars(Side::PLAYER, PowerLevels::ROOK + playerStartingIndex, 2, 1);
         addChars(Side::PLAYER, PowerLevels::KNIGHT + playerStartingIndex, 1, 2);
         addChars(Side::PLAYER, PowerLevels::BISHOP + playerStartingIndex, 0, 3);
-        addChars(Side::ENEMY, PowerLevels::PAWN + enemiesStartingIndex, 4, 2);
+        addChars(Side::ENEMY, PowerLevels::PAWN + enemiesStartingIndex, 4, 3);
         addChars(Side::ENEMY, PowerLevels::ROOK + enemiesStartingIndex, 3, 2);
         addChars(Side::ENEMY, PowerLevels::KNIGHT + enemiesStartingIndex, 2, 2);
         
@@ -96,16 +90,14 @@ void LevelManager::loadCharacters(Level level, GameMode gmd)
         addChars(Side::ENEMY, PowerLevels::KING + enemiesStartingIndex, level*level, 7);
     }
     loadShop();
-    
     loadEnemies();
-  
 }
 
 void LevelManager::addChars(Side side, size_t chr, size_t powerCoef, size_t charsNum) // I wanted to keep adding new entities only in the Game class functions
 {
     for (size_t i = 0; i < charsNum; i++)
     {
-        auto& character(manager->addEntity());
+        auto& character(manager.addEntity());
         character.addComponent<CharacterComponent>(jCharacters.at(chr), powerCoef, chr, side);
         if (side == Side::PLAYER)
         {
@@ -121,9 +113,9 @@ void LevelManager::addChars(Side side, size_t chr, size_t powerCoef, size_t char
 
 void LevelManager::loadShop()
 {
-    manager->clearGroup(groupSHOP);
-    manager->shuffleGroup(groupPLAYERCHARS);
-    auto& plChars(manager->getGroup(GroupLabels::groupPLAYERCHARS));
+    manager.clearGroup(groupSHOP);
+    manager.shuffleGroup(groupPLAYERCHARS);
+    auto& plChars(manager.getGroup(GroupLabels::groupPLAYERCHARS));
     for (size_t i = 0; i < shopTileCoords.size(); i++)
     {
         if (i >= plChars.size())
@@ -149,9 +141,9 @@ void LevelManager::loadShop()
 
 void LevelManager::loadEnemies()
 {
-    manager->clearGroup(groupENEMYBOARD);
-    manager->shuffleGroup(groupENEMYCHARS);
-    auto& enChars(manager->getGroup(GroupLabels::groupENEMYCHARS));
+    manager.clearGroup(groupENEMYBOARD);
+    manager.shuffleGroup(groupENEMYCHARS);
+    auto& enChars(manager.getGroup(GroupLabels::groupENEMYCHARS));
     for (size_t i = 0; i < enemiesTileCoords.size(); i++)
     {
         if (i >= enChars.size())

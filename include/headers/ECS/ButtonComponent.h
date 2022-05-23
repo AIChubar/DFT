@@ -9,25 +9,37 @@
 #include "Vector2D.h"
 #include "Game.h"
 
-
+//
 class ButtonComponent : public Component
 {
 private:
     GameMode gameMode;
+    TransformComponent* transform;
     SpriteComponent* sprite;
+
     UserEvents eventToCall;
+
+    Vector2D position;
+    int height;
+    int width;
+    std::string texID;
 
 public:
 
     ~ButtonComponent() = default;
-    ButtonComponent(UserEvents evnt)
+    ButtonComponent(Vector2D pos, int h, int w, UserEvents evnt, const std::string& tID)
     {
         eventToCall = evnt;
+        position = pos;
+        height = h;
+        width = w;
+        texID = tID;
     }
 
     void init() override
     {
-        sprite = &entity->getComponent<SpriteComponent>();
+        transform = &entity->addComponent<TransformComponent>(position, height, width);
+        sprite = &entity->addComponent<SpriteComponent>(texID);
     }
 
     void handleEvents() override

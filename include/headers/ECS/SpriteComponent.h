@@ -25,36 +25,30 @@ public:
     }
     SpriteComponent(size_t chr) 
     {
-        
         std::string tID = "char" + std::to_string(chr) + ".png";
         texture = Game::assets->getTexture(tID);
     }
-    ~SpriteComponent()
-    {
-        //SDL_DestroyTexture(texture);
-    }
-    // void setTex(const char* path)
-    // {
-    //     //texture = TextureManager::loadTexture(path);
-    // }
+    ~SpriteComponent() //all Textures are destroyed in AssetManager now
+    {}
+
 
     void init() override
     {
         transform = &entity->getComponent<TransformComponent>();
 
         srcRect.x = srcRect.y = 0;
-        srcRect.w = transform->width;
-        srcRect.h = transform->height;
-        destRect.w = transform->width*2;
-        destRect.h = transform->height*2;
+        srcRect.w = transform->w();
+        srcRect.h = transform->h();
+        destRect.w = transform->w();
+        destRect.h = transform->h();
     } 
 
     void update() override
     {
         destRect.x = transform->x();
         destRect.y = transform->y();
-        destRect.w = transform->width * transform->scale;
-        destRect.h = transform->height * transform->scale;
+        destRect.w = transform->w();
+        destRect.h = transform->h();
     }
 
     void draw() override

@@ -1,10 +1,12 @@
 #include "Map.h"
 #include "TextureManager.h"
-#include "headers/ECS/Components.h"
+#include "ECS/ECS.h"
+#include "ECS/TileComponent.h"
 
 #include <fstream>
 #include <iostream>
 #include <stdlib.h>
+#include <string>
 
 extern Manager manager;
 
@@ -12,7 +14,7 @@ Map::Map(const std::string& tID, const std::string& oID, int ts) : terrainTileSe
 
 Map::~Map(){}
 
-void Map::loadMap(const std::string& pathTerrain, const std::string& pathTileOverlay, std::vector<Vector2D>& shopTileCoords, std::vector<Vector2D>& enemiesTileCoords, int sizeX, int sizeY)
+void Map::loadMap(const std::string& pathTerrain, const std::string& pathTileOverlay, std::vector<Vector2D>& playerBoardCoords, std::vector<Vector2D>& shopTileCoords, std::vector<Vector2D>& enemiesTileCoords, int sizeX, int sizeY)
 {
     char c;
     std::fstream terrainFile;
@@ -29,11 +31,12 @@ void Map::loadMap(const std::string& pathTerrain, const std::string& pathTileOve
         for (int x = 0; x < sizeX; x++)
         {
             terrainFile.get(c);
-            srcY = strtol(&c, nullptr, 10) * 32;
+            srcY = std::stoi(std::string(1, c)) * 64; //for some reason atoi or strtol was not working for me
             terrainFile.get(c);
-            srcX = strtol(&c, nullptr, 10) * 32;
+            srcX = std::stoi(std::string(1, c)) * 64;
             tileOverlayFile.get(c);
-            ts = strtol(&c, nullptr, 10);
+            ts = std::stoi(std::string(1, c));
+            
             tileStat = static_cast<TileStatus>(ts);
             if (tileStat == TileStatus::SHOP)
             {
@@ -42,6 +45,10 @@ void Map::loadMap(const std::string& pathTerrain, const std::string& pathTileOve
             else if (tileStat == TileStatus::ENEMYBOARD)
             {
                 enemiesTileCoords.emplace_back(Vector2D(x, y));
+            }
+            else if (tileStat == TileStatus::PLAYERBOARD)
+            {
+                playerBoardCoords.emplace_back(Vector2D(x, y));
             }
             addTile(srcX, srcY, x*tileSize, y*tileSize, GroupLabels::groupMAP, tileStat);
             terrainFile.ignore();

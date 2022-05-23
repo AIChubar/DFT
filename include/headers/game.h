@@ -11,6 +11,9 @@
 #include "EnumManager.h"
 #include "ECS/ECS.h"
 #include "AssetManager.h"
+#include "LevelManager.h"
+
+#include "Map.h"
 
 
 class Game {
@@ -20,14 +23,14 @@ class Game {
 
         void run();
         
-        
+        static std::unique_ptr<AssetManager> assets;
         static SDL_Renderer* renderer;
         static SDL_Event event;
-        static Entity* getCharByIndex(GroupLabels grp, size_t i);
-        static AssetManager* assets;
-        static Entity* getTileByCoord(int xTile, int yTile);
+        static Entity& getCharByIndex(GroupLabels grp, size_t i);
+        static Entity& getTileByCoord(int xTile, int yTile);
         static GameStage gameStage;
         static GameMode gameMode;
+
     private:
         void init(const char* title, int x, int y, int w, int h, Uint32 flags);
         void gameLoop();
@@ -36,16 +39,30 @@ class Game {
         void clean();
         void update();
         void initLevel();
-        void startFight();
+        void startDuel();
         int random(int low, int high) const;
-        //void updateBoard();
         void restart();
 
         void initBoard(size_t boardSize);
 
+        std::unique_ptr<Map> map;
+        std::unique_ptr<LevelManager> levelManager;
+
+        size_t currentDuelIndex;
+        size_t currentOpponentIndex; // random opponent index
+        int currentDuelTimer; // in ms
+        Side attackingSide;
+        bool duelIsActive;
+        size_t playerBoardSize;
+        size_t enemyBoardSize;
+
+        Entity* currentOpponent;
+        Entity* currentAttacker;
+
         SDL_Window* window;
 
         Level currentLevel;
+        int startingMoney;
 
         int screenWidth;
         int screenHeight;

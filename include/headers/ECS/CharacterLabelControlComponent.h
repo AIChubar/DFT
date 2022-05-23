@@ -39,7 +39,7 @@ public:
                 case SDL_BUTTON_RIGHT:
                     if(pointOnSprite())
                     {
-                        charLab->activate(character);
+                        charLab->activateLabel(character);
                     }
                     else
                     {

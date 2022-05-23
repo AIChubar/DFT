@@ -3,15 +3,20 @@
 #include <utility>
 #include <fstream>
 
+#include "ECS/CharacterFrameComponent.h"
+#include "ECS/TileComponent.h"
+#include "Game.h"
+
 #include "EnumManager.h"
 #include "Vector2D.h"
 
 using GameUnit = size_t;
 
-// TBD add user events to control characters
 
 class CharacterComponent : public Component
 {
+private:
+    CharacterFrameComponent* characterFrame;
 public:
 
     bool textureAdded;
@@ -28,6 +33,8 @@ public:
 
     bool ranged;
     bool cleave;
+public:
+
 
     ~CharacterComponent() = default;
     CharacterComponent() = default;
@@ -47,44 +54,54 @@ public:
         side = sd;
     }
 
+    void init() override
+    {
+        characterFrame = &entity->addComponent<CharacterFrameComponent>("fightFrame");
+    }
+
     void update() override
     {
         if (currentHealth <= 0)
         {
+            SDL_Event event;
+            SDL_memset(&event, 0, sizeof(event)); 
+            event.type = SDL_USEREVENT;
+            event.user.code = UserEvents::PLAYERDIED;
             if (side == Side::ENEMY)
             {
-                SDL_Event event;
-                SDL_memset(&event, 0, sizeof(event)); 
-                event.type = SDL_USEREVENT;
-                event.user.code = UserEvents::ADDMONEY;
-                uintptr_t costptr = (uintptr_t)&cost;
-                event.user.data1 = (void*)costptr; // Passing data with the Event, this conversion might not be the best solution
-                SDL_PushEvent(&event);
+                triggerAddMoney();
+                event.user.code = UserEvents::ENEMYDIED;
             }
-            Vector2D tileCoord = entity->getComponent<TransformComponent>().position;
-            Game::getTileByCoord(tileCoord.x/64, tileCoord.y/64)->getComponent<TileComponent>().bindedCharIndex = -1;
+            SDL_PushEvent(&event);
+            Vector2D tileCoord = entity->getComponent<TransformComponent>().getPos();
+            Game::getTileByCoord(tileCoord.x/64, tileCoord.y/64).getComponent<TileComponent>().bindedCharIndex = -1;
             entity->destroy();
         }
     }
 
-    void sell() // Making a character player wants to sell an enemy and setting its hp to 0, so it triggers condition in the update function
+        void sell()
     {
-        side = Side::ENEMY;
         currentHealth = 0;
+        triggerAddMoney();
     }
 
-    void attack(CharacterComponent* enemy)
+    
+
+    void startAttack(Entity* enemy)
     {
-        
-        enemy->currentHealth -= damage;
+        characterFrame->activate(false);
+        enemy->getComponent<CharacterFrameComponent>().activate(true);
+    }
+
+    void finishAttack(Entity* enemy)
+    {
+        characterFrame->deactivate();
+        enemy->getComponent<CharacterFrameComponent>().deactivate();
+        enemy->getComponent<CharacterComponent>().currentHealth -= damage;
+
         if (!ranged)
         {
-            currentHealth -= enemy->damage;
-        }
-        //if(cleave) // attacks neighbour enemies TBD
-        if (enemy->currentHealth <= 0)
-        {
-            return;
+            currentHealth -= enemy->getComponent<CharacterComponent>().damage;
         }
     }
 
@@ -93,6 +110,23 @@ public:
         damage *= 1.1;
         maxHealth *= 1.1;
         currentHealth *= 1.1;
+    }
+
+    GameUnit getCost()
+    {
+        return cost;
+    }
+
+private:
+    void triggerAddMoney()
+    {
+        SDL_Event event;
+        SDL_memset(&event, 0, sizeof(event)); 
+        event.type = SDL_USEREVENT;
+        event.user.code = UserEvents::ADDMONEY;
+        uintptr_t costptr = (uintptr_t)&cost;
+        event.user.data1 = (void*)costptr; // Passing data with the Event, this conversion might not be the best solution
+        SDL_PushEvent(&event);
     }
 
 };

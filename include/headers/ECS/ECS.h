@@ -17,15 +17,15 @@ class Manager;
 using ComponentID = std::size_t; 
 using Group = std::size_t;
 
-inline ComponentID getComponentTypeID() 
+inline ComponentID getNewComponentTypeID() // We store a static number that is unique for each new instantiation of component
 {
     static ComponentID lastID = 0;
     return lastID++; 
 }
 
-template <typename T> inline ComponentID getComponentTypeID() noexcept
+template <typename T> inline ComponentID getComponentTypeID() noexcept 
 {
-    static ComponentID typeID = getComponentTypeID();
+    static ComponentID typeID = getNewComponentTypeID();
     return typeID;
 }
 
@@ -46,7 +46,11 @@ class Component
     virtual void draw() {}
     virtual void handleEvents() {}
 
-    virtual ~Component() {}
+    virtual ~Component() {} // Applying the rule of 5
+    Component() = default;
+    Component& operator=(const Component& copyFrom) = default;
+    Component(Component &&) = default;
+    Component& operator=(Component &&) = default;
 };
 
 class Entity
@@ -61,7 +65,7 @@ class Entity
     GroupBitset groupBitset;
     
     public:
-    Entity(Manager& mng) : manager(mng){} //rewrite everything in this style
+    Entity(Manager& mng) : manager(mng){}
 
 
     void update()
@@ -84,7 +88,6 @@ class Entity
         return groupBitset[grp];
     }
 
-    //void addGroup(Group grp);
     const std::vector<Entity*>& getGroup(Group grp);
     void addGroup(Group grp);
     size_t getGroupSize(Group grp) const;
@@ -96,26 +99,23 @@ class Entity
 
     template <typename T> bool hasComponent() const
     {
-        return componentBitSet[getComponentTypeID<T>];
+        return componentBitSet[getComponentTypeID<T>()];
     }
 
     template <typename T, typename... TArgs>
     T& addComponent(TArgs&&... mArgs)
     {
-        T* c(new T(std::forward<TArgs>(mArgs)...)); //???
+        T* c(new T(std::forward<TArgs>(mArgs)...)); 
         c->entity = this;
-        std::unique_ptr<Component> uPtr{ c };
+        std::unique_ptr<Component> uPtr{ c }; // Wrapping a unique pointer around created raw one
         components.emplace_back(std::move(uPtr));
 
         componentArray[getComponentTypeID<T>()] = c;
         componentBitSet[getComponentTypeID<T>()] = true;
 
         c->init();
-        return *c;
+        return *c; // This is memory safe
     }
-
-    
-    
 
     template<typename T> T& getComponent() const
     {
@@ -132,6 +132,7 @@ class Manager
     std::array<std::vector<Entity*>, maxGroups> groupedEntities;
 
     public:
+
     void update()
     {
         for (auto& e : entities) e->update();
@@ -147,7 +148,6 @@ class Manager
 
     void refresh()
     {
-
         for (Group i = 0; i < maxGroups; i++)
         {
             auto& v(groupedEntities[i]); // Vector of entites that belong to a current group    
@@ -197,9 +197,9 @@ class Manager
         return groupedEntities[grp];
     }
 
-    Entity* getCharByIndex(Group grp, size_t i)
+    Entity& getCharByIndex(Group grp, size_t i)
     {
-        return groupedEntities[grp].at(i);
+        return *groupedEntities[grp].at(i);
     }
 
     Entity& addEntity()

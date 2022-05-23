@@ -11,9 +11,9 @@
 
 class DragComponent : public Component
 {
-public:
+private:
 
-    SpriteComponent* sprite; // Not needed
+    SpriteComponent* sprite; 
     TransformComponent* transform;
     Vector2D relativeMousePos;
     Vector2D initialPos;
@@ -21,7 +21,7 @@ public:
 
     TileComponent* initialTile;
     TileComponent* targetTile;
-    
+public:
     DragComponent() = default;
 
     void init() override
@@ -39,12 +39,11 @@ public:
                 case SDL_BUTTON_LEFT:
                     if(pointOnSprite())
                     {
-                        initialPos = transform->position;
-                        initialTile = &Game::getTileByCoord(initialPos.x/64, initialPos.y/64)->getComponent<TileComponent>();
-                        std::cout << initialTile->tileStatus <<'\n';
+                        initialPos = transform->getPos();
+                        initialTile = &Game::getTileByCoord(initialPos.x/64, initialPos.y/64).getComponent<TileComponent>();
                         spriteMoving = true;
                         Vector2D mousePos = getMousePos();
-                        relativeMousePos = mousePos - transform->position;
+                        relativeMousePos = mousePos - transform->getPos();
                     }
                     break;
                 default:
@@ -60,15 +59,15 @@ public:
                     if (spriteMoving)
                     {
                         spriteMoving = false;
-                        targetTile = &Game::getTileByCoord((transform->position.x + 32)/64, (transform->position.y + 32)/64)->getComponent<TileComponent>();
-                        if (transform->position.x > 64*17) //Selling case
+                        targetTile = &Game::getTileByCoord((transform->x() + 32)/64, (transform->y() + 32)/64).getComponent<TileComponent>();
+                        if (transform->x() > 64*17 && initialTile->tileStatus == TileStatus::PLAYERBOARD) //Selling case
                         {
                             entity->getComponent<CharacterComponent>().sell();
                             initialTile->bindedCharIndex = -1;
                         }
                         else if (!canBePlaced() || (!isEmpty() && initialTile->tileStatus == TileStatus::SHOP)) 
                         { // Dragable character can only be in the SHOP or at the PLAYERBOARD
-                            transform->position = initialPos;
+                            transform->setPos(initialPos);
                         }
                         else
                         {
@@ -81,9 +80,9 @@ public:
                             {
                                 MoneyLabel* monLab = &entity->getGroup(GroupLabels::groupLABELS).at(Labels::MONEYLABEL)->getComponent<MoneyLabel>();
                                 CharacterComponent* character = &entity->getComponent<CharacterComponent>();
-                                if (!monLab->pay(character->cost))
+                                if (!monLab->pay(character->getCost()))
                                 {
-                                    transform->position = initialPos;
+                                    transform->getPos() = initialPos;
                                     break;
                                 }
                                 
@@ -98,7 +97,7 @@ public:
                                 initialTile->bindedCharIndex = -1;
                                 targetTile->bindedCharIndex = initialIndex;
                             }
-                            transform->position = targetTile->position;
+                            transform->setPos(targetTile->getPos());
                         }
                     }
                     break;
@@ -110,7 +109,7 @@ public:
         if(spriteMoving)
         {
             Vector2D mousePos = getMousePos();
-            transform->position = mousePos - relativeMousePos;
+            transform->setPos(mousePos - relativeMousePos);
         }
     }
 
@@ -134,8 +133,7 @@ private:
 
         int initialIndex = initialTile->bindedCharIndex;
 
-        Game::getCharByIndex(GroupLabels::groupPLAYERBOARD, targetIndex)
-            ->getComponent<TransformComponent>().setPos(initialPos);
+        Game::getCharByIndex(GroupLabels::groupPLAYERBOARD, targetIndex).getComponent<TransformComponent>().setPos(initialPos);
 
         targetTile->bindedCharIndex = initialIndex;
 
