@@ -88,7 +88,7 @@ public:
         labelTexts.at(1) = ("Health: " + std::to_string(currentCharacter->currentHealth) + " / " + std::to_string(currentCharacter->maxHealth));
         labelTexts.at(2) = ("Damage: " + std::to_string(currentCharacter->damage));
         labelTexts.at(3) = ("Cleave: " + (currentCharacter->cleave ? yes : no));
-        labelTexts.at(4) = ("Range: " + (currentCharacter->ranged ? yes : no));
+        labelTexts.at(4) = ("Ranged: " + (currentCharacter->ranged ? yes : no));
         labelTexts.at(5) = ("Cost: " + std::to_string(currentCharacter->cost));
 
         for (size_t i = 0; i < labelTexts.size(); i++)

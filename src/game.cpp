@@ -233,12 +233,9 @@ void Game::handleEvents()
             }
             else if(event.user.code == UserEvents::STARTFIGHT && !(playerBoard.empty() || enemyBoard.empty()))
             {
-                //sortPlayerBoard();
                 gameStage = GameStage::FIGHTING;
                 playerBoardSize =  playerBoard.size();
                 enemyBoardSize =  enemyBoard.size();
-                //startDuel;
-                
             }
             else if(event.user.code == UserEvents::POWERUP && !playerBoard.empty())
             {
