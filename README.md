@@ -42,4 +42,21 @@ SDL2_ttf
 Nlohmann JSON for Modern C++
 
 # How to compile
-The game can be builded on the Windows machine with installed MinGW-w64 for gcc 8.1.0. The version of the game with all the libraries can be found on the FullProject branch of this repository. To build the game you need to run the MakeFile with a command "mingw32-make -f MakeFile".
+The game can be builded on the Windows machine with installed MinGW-w64 for gcc 8.1.0. The version of the game with all the libraries can be found on the FullProject branch of this repository. To build the game you need to run the MakeFile with a command `mingw32-make -f MakeFile`.
+
+# Architecture
+The project is done using an Entity Component System.
+
+![DTF](https://user-images.githubusercontent.com/61264363/182501022-ee38f4f6-3215-4ccd-bcb7-1747ef7a470b.png)
+
+
+# To be improved
+- Use Button Component for Character Labels 
+- Create Event Manager class to store and control Events
+- Improve mouse input handling
+- Make unified Label Component
+- Move more logic of the game to a Component system (Map, Levels, Enemy)
+- Move fighting to another class and rework it (Make it calculates the fight first and then Animate it)
+- Create Entity for a player that handles all the information (Characters, Money, Fight statistics)
+- Move Character Frame logic to Tile Component (create specific Tiles that has different properties). Or rework Character Component to handle it.
+- Add animations and create assets.
