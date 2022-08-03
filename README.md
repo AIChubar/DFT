@@ -29,17 +29,17 @@ There are three main parts of the interface: Player Board, Enemy Board, and Shop
 All the manipulation in the game is performed with a mouse. All the buttons on the screen can be clicked with a left mouth button. The character can be bought from the shop by dragging it to the empty slot. To sell the character it should be dragged from the Player Board to the Shop area (currently yellow). The information about the character can be shown by clicking on it with a right mouse button.
 
 # Used soft
--IDE - Visual Studio Code
--Assets - Pyxel Edit
--C++ Compiler - gcc 8.1.0
--Runtime Environment - MinGW-w64 
--OS - Windows 10
+- IDE - Visual Studio Code
+- Assets - Pyxel Edit
+- C++ Compiler - gcc 8.1.0
+- Runtime Environment - MinGW-w64 
+- OS - Windows 10
 
 # Used libraries
--SDL2 MinGW version
--SDL2_image
--SDL2_ttf
--Nlohmann JSON for Modern C++
+- SDL2 MinGW version
+- SDL2_image
+- SDL2_ttf
+- Nlohmann JSON for Modern C++
 
 # How to compile
 The game can be builded on the Windows machine with installed MinGW-w64 for gcc 8.1.0. The version of the game with all the libraries can be found on the FullProject branch of this repository. To build the game you need to run the MakeFile with a command `mingw32-make -f MakeFile`.
