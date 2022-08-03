@@ -26,7 +26,7 @@ There are three main parts of the interface: Player Board, Enemy Board, and Shop
 ![Capture](https://user-images.githubusercontent.com/61264363/182048085-4cebe9c2-12b0-4051-b896-7afaa60acafa.PNG)
 
 # Controls
-All the manipulation in the game is performed with a mouse. All the buttons on the screen can be clicked with a left mouth button. The character can be bought from the shop by dragging it to the empty slot. To sell the character it should be dragged from the Player Board to the Shop area (currently yellow). The information about the character can be shown by clicking on it with a right mouse button.
+All the manipulation in the game is performed with a mouse. All the buttons on the screen can be clicked with a left mouth button. The character can be bought from the shop by dragging it to the empty slot. To sell the character it should be dragged from the Player Board to the Shop area (currently yellow). The information about the character can be shown by clicking on it with a right mouse button. All player input is disabled during the fight.
 
 # Used soft
 - IDE - Visual Studio Code
